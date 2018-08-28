@@ -1,0 +1,272 @@
+$primaryColor :  #4b367c
+$secondaryColor : #0e9dd9
+$attentionColor : #ff9d35
+$headerHeight : 50px
+
+=DroidFont
+    font-family: 'Droid Sans', sans-serif
+
+body
+    background: $primaryColor
+    margin: 0
+
+sidebar
+    z-index: 10
+    display: block
+    background: $secondaryColor
+    position: fixed
+    top: 0
+    height: $headerHeight
+    width: 100%
+    
+.header-container
+    max-width: 960px
+    margin: 0 auto
+    
+.site-title
+    font-family: 'Passion One', cursive
+    float: left
+    font-size: 2em
+    color: #EEE
+    text-shadow: 0 3px 0px black
+    margin: 5px 10px
+    
+.display-settings
+    float: right
+    margin-right: 10px
+
+.display-option
+    +DroidFont
+    font-size: 0.8em
+    float: left
+    display: block
+    background: $attentionColor
+    width: 55px
+    padding: 5px 0
+    text-align: center
+    margin-top: 12px
+    margin-right: 2px
+    cursor: pointer
+    color: white
+    &:hover
+        background: $attentionColor + 20
+    &:active, &.selected
+        background: $attentionColor + 70
+        color: gray
+        cursor: default
+
+.stream-list-container
+    max-width: 960px
+    margin: $headerHeight auto 0
+    padding: 1em 0
+
+.twitch-container
+    background: #e6e9ef
+    width: 300px
+    margin: 2em auto
+
+$statusHeight: 20px
+
+.status-bar
+    height: $statusHeight
+    padding: 10px
+    
+.unrecognized .status-bar
+    background: gray
+    
+.offline .status-bar
+    background: $secondaryColor + 20
+
+$lightSize : 12px
+
+.active .status-bar
+    background: green
+    position: relative
+    &:before
+        content: " "
+        position: absolute
+        top: $lightSize/2
+        left: $lightSize/2
+        display: block
+        width: $lightSize
+        height: $lightSize
+        border: 1px solid lime
+        border-radius: 10px
+        background: #77FF00
+        animation: Blink 1s infinite alternate ease-out
+
+=arrow
+    float: right
+    margin-top: $statusHeight/4.5
+    margin-right: 5px
+    border-width: $statusHeight/2
+    border-style: solid
+    border-color: transparent
+    border-top-color: $primaryColor
+    border-bottom-color: $primaryColor
+    cursor: pointer
+    &:hover
+        border-top-color: $primaryColor + 30
+        border-bottom-color: $primaryColor + 30
+    &:active
+        border-top-color: $primaryColor + 150
+        border-bottom-color: $primaryColor + 150
+    
+.up
+    +arrow
+    border-top-width: 0
+    
+.down
+    +arrow
+    border-bottom-width: 0
+    
+.clear
+    float: right
+    display: block
+    width: $statusHeight
+    height: $statusHeight
+    position: relative
+    transform: rotate(-45deg)
+    &:before, &:after 
+        position: absolute
+        left: $statusHeight/2
+        content: ' '
+        height: $statusHeight
+        width: 2px
+        background-color: $primaryColor
+    &:hover:before, &:hover:after
+        background-color: $primaryColor + 30
+    &:active:before, &:active:after
+        background-color: $primaryColor + 150
+    &:after
+        transform: rotate(-90deg)
+    
+.stream-icon
+    display: block
+    width: 100%
+    height: auto
+    margin: 0 auto
+        
+.channel-info
+    text-align: center
+    margin-top: 1em
+    +DroidFont
+
+.stream-name
+    text-transform: capitalize
+    font-size: 2em
+    margin: 0 0 0.25em
+    font-weight: 600
+    color: #171719
+    height: 1em
+    
+.stream-status
+    height: 3.5em
+    margin: 0 2em 1em
+    overflow-y: auto
+    font-style: italic
+    font-size: 0.9em
+    color: #777
+    
+.stream-link
+    display: inline-block
+    color: white
+    padding: 20px
+    width: 200px
+    margin: 0 10px 10px
+    text-decoration: none
+    &:hover
+        color: lightgray
+        opacity: 0.9
+    &:active
+        color: black
+    
+.unrecognized .stream-link
+    color: $primaryColor + 60
+    cursor: default
+    padding: 19px
+    border: 1px solid $primaryColor + 60
+    &:hover
+        opacity: 1
+    
+.offline .stream-link
+    background: $secondaryColor + 20
+    &:active
+        background: #5fdffa
+
+.active .stream-link
+    background: green
+    &:active
+        background: lightgreen
+    
+.add-stream-overlay
+    display: none
+    position: fixed
+    margin: 0
+    z-index: 10
+    top: 0
+    width: 100%
+    height: 100vh
+    background: rgba(0,0,0,0.8)
+    
+.add-stream-menu
+    +DroidFont
+    min-width: 300px
+    width: 50%
+    max-width: 500px
+    background: $secondaryColor
+    margin: 0% auto 0
+    padding: 1.5em 1em
+    text-align: center
+    input
+        width: 70%
+        margin-right: 10px
+        padding: 5px
+    #submit
+        position: relative
+        top: 1px
+        background: $attentionColor
+        padding: 5px 10px
+    p.error
+        color: red
+        font-style: italic
+        margin-bottom: 0
+    
+.add-stream
+    position: fixed
+    display: table
+    bottom: 0
+    right: 0
+    margin-right: 5%
+    margin-bottom: 2em
+    background: $attentionColor
+    width: 70px
+    text-align: center
+    height: 70px
+    border-radius: 100%
+    
+    span
+        display: table-cell
+        vertical-align: middle
+        font-size: 3em
+        font-weight: bold
+        color: white
+
+@keyframes Blink
+    from
+        opacity: 0.3
+    to
+        opacity: 1
+        
+@media screen and (min-width: 640px)
+    .stream-list-container
+        width: 640px
+    .twitch-container
+        float: left
+        margin: 0 10px 20px
+        
+@media screen and (min-width: 960px)
+    .stream-list-container
+        width: 960px
+    .twitch-container
+        float: left
