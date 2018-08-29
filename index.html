@@ -1,34 +1,34 @@
-<head>
-  <link href="https://fonts.googleapis.com/css?family=Passion+One|Droid+Sans:400,600" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css" rel="stylesheet" type="text/css">
-  <link href="style.css" rel="stylesheet" type="text/css">
-</head>
-<body>
-  <sidebar>
-    <div class="header-container">
-      <span class="site-title">Stream Status</span>
-      <div class="display-settings">
-        <a class="display-option selected">All</a>
-        <a class="display-option">Live</a>
-        <a class="display-option">Offline</a>
+<html lang="en">
+  <head>
+    <link href="https://fonts.googleapis.com/css?family=Passion+One|Droid+Sans:400,600" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css" rel="stylesheet" type="text/css">
+    <link href="style.css" rel="stylesheet" type="text/css">
+  </head>
+  <body>
+    <header id="main-menu">
+      <div class="header-contents">
+        <span class="site-title">Stream Status</span>
+        <div class="display-settings">
+          <a class="display-option selected">All</a>
+          <a class="display-option">Live</a>
+          <a class="display-option">Offline</a>
+        </div>
+      </div>
+    </header>
+    <main class="stream-list-container"></main>
+    <div class="add-stream-overlay">
+      <div class="add-stream-menu">
+        <a class="clear"></a>
+        <p>Enter the streamer's username</p>
+        <input type="text" id="new-streamer">
+        <a id="submit">Add</a>
+        <p class="error"></p>
       </div>
     </div>
-  </sidebar>
-  <div class="stream-list-container">
+    <div class="add-stream">+</div>
 
-  </div>
-  <div class="add-stream-overlay">
-    <div class="add-stream-menu">
-      <a class="clear"></a>
-      <p>Enter the streamer's username</p>
-      <input type="text" id="new-streamer">
-      <a id="submit">Add</a>
-      <p class="error"></p>
-    </div>
-  </div>
-  <div class="add-stream"><span>+</span></div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prefixfree/1.0.7/prefixfree.min.js"></script>
-  <script src="script.js"></script>
-</body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prefixfree/1.0.7/prefixfree.min.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
