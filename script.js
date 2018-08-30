@@ -1,18 +1,142 @@
 (function () {
-
+  
   /** Array used to store tracked streamers */
   var trackedNames = ["vgbootcamp","ESL_SC2", "OgamingSC2", "cretetion", "freecodecamp", "storbeck", "habathcx", "RobotCaleb", "noobs2ninjas"];
 
-  /** Enum helper variable */
-  var DIRECTION = Object.freeze({
+  /**
+  * Enum for arrow direction 
+  * @readonly
+  * @enum {String}
+  */
+  const DIRECTION = Object.freeze({
     UP: "DIRECTION_UP",
     DOWN: "DIRECTION_DOWN"
   });
 
+  /**
+  * Enum for streamer status 
+  * @readonly
+  * @enum {String}
+  */
+  const STREAMSTATUS = Object.freeze({
+    ONLINE: "ONLINE",
+    OFFLINE: "OFFLINE"
+  });
+  
+  /**
+  * Helper function used to create DOM elements
+  * @param{String} tag - the tag to wrap the element with.
+  * @param{String} className - The class to assign to the element.
+  * @param{Object} attr - List of attributes to add to the element.
+  * @param{String} content - The inner text.
+  * @return {HTMLElement}
+  */
+  function createElement(tag, className, attr, content = null) {
+    let el = document.createElement(tag);
+    el.className = className;
+    el.textContent = content;
 
-  /** Helper function to access Twitch API.
+    for (let key in attr) {
+      if (attr.hasOwnProperty(key)) {
+        el.setAttribute(key, attr[key]);
+      }
+    }
+
+    return el;
+  }
+
+  /**
+  * Helper function that links together a list of elements to a parent node.
+  * @param{HTMLElement} parent - The parent element to attach to.
+  * @param{HTMLElement[]} elements - An array of elements to attach.
+  */
+  function addElementsToParent(parent, elements) {
+    elements.forEach(el => {
+      parent.appendChild(el);
+    });
+  }
+
+  /** Object used to consolidate streamer card functions */
+  class streamerCard {
+    /**
+    * Constructor
+    * @param{String} searchedName - The initial username that an user enters when searching.
+    */
+    constructor(searchedName) {
+      this.displayName = searchedName;
+      this.name = this.img = this.status = this.cardContainer = this.channelInfo = null;
+
+      this.createCard();
+    }
+
+    /**
+    * Creates the card's HTML elements */
+    createCard() {
+      this.cardContainer = createElement('div', 'twitch-container');
+
+      let statusBar = createElement('div', 'status-bar');
+      let clearBtn = createElement('div', 'clear');
+      let upBtn = createElement('div', 'sort-up-arrow');
+      let downBtn = createElement('div', 'sort-down-arrow');
+      addElementsToParent(statusBar, [clearBtn, downBtn, upBtn]);
+
+      this.img = createElement('img', 'stream-icon', {'src': 'https://www.placehold.it/300x300'});
+
+      this.channelInfo = createElement('div', 'channel-info');
+      this.name = createElement('div', 'stream-name', null, this.displayName);
+      this.status = createElement('div', 'stream-status', null, 'Loading');
+
+      addElementsToParent(this.channelInfo, [this.name, this.status]);
+      addElementsToParent(this.cardContainer, [statusBar, this.img, this.channelInfo]);
+
+      document.getElementById('stream-list-container').appendChild(this.cardContainer);
+    }
+
+    /**
+    * Updates the streamer's display name to exactly match how they typed it.
+    * @param{String} displayName - The new displayName to use.
+    */
+    setDisplayName(displayName) {
+      this.name.textContent = displayName;
+    }
+
+    /**
+    * Update the streamer's status
+    * @param{StreamStatus} status - What the streamer's status is.
+    * @param{String} statusText - The text to display as the streamer's status.
+    */
+    setStatus(status, statusText) {
+      this.channelInfo.appendChild(createElement('a', 'stream-link', {'href': `https://www.twitch.tv/${this.displayName}`}, 'Visit Channel'));
+      
+      if (status === STREAMSTATUS.OFFLINE) {
+        this.status.textContent = "Offline";
+        this.cardContainer.classList.add("offline");
+      } else if (status === STREAMSTATUS.ONLINE) {
+        this.status.textContent = statusText;
+        this.cardContainer.classList.add("active");
+      }
+
+    }
+
+    /** Update streamer status text for channels that don't exist. */
+    setChannelNull() {
+      this.status.textContent = "Channel coming soon!";
+    }
+
+    /**
+    * Update the streamer's icon.
+    * @param{StreamStatus} imageURL - URL for streamer's icon.
+    */
+    setImage(imageUrl) {
+      this.img.setAttribute('src', imageUrl);
+    }
+  }
+
+  /**
+  * Helper function to access Twitch API.
   * @param {String} username - The username to search for.
   * @param {String} type - Which database to search.
+  * @return {String}
   */
   function GetURL(username,type) {
     return "https://wind-bow.gomix.me/twitch-api/"+type+"/"+username+"?callback=?";
@@ -20,55 +144,32 @@
 
   /* Helper function to load default usernames at startup. */
   function populateDefaultList() {
-    trackedNames.forEach(function(name) {
+    trackedNames.forEach(name => {
       GetStreamInfo(name);
     });
   }
 
-  /* Pull specified username data from Twitch API, and create info card. Needs to make two seperate calls due to the way that Twitch organizes their data.
+  /*
+  * Pull specified username data from Twitch API, and create info card. Needs to make two seperate calls due to the way that Twitch organizes their data.
   * @param{String} username - The username to search for.
   */
   function GetStreamInfo(username) {
-    $.getJSON(GetURL(username,"users"), function(userData) {
-      // Create page elements
-      var container = $('<div class="twitch-container"></div>');
-      var statusBar = $('<div class="status-bar"><div class="clear"></div><div class="sort-down-arrow"></div><div class="sort-up-arrow"></div></div>');
-      var iconContainer = $('<img class="stream-icon" src="http://placehold.it/100x100">');
-      var channelInfo = $('<div class="channel-info"><div class="stream-name"></div><div class="stream-status">Channel coming soon!</div><a class="stream-link">Link unavailable</a></div>');
+    let streamerToAdd = new streamerCard(username);
 
-      // Append elements to one another.
-      container.append(statusBar).append(iconContainer).append(channelInfo);
-
-      // Fill in data.
-      channelInfo.children('.stream-name').html(userData.display_name);
-      channelInfo.children('.stream-link').attr({"href":"http://www.twitch.tv/" + userData.display_name,"target":"_blank"});
-
-      // Twitch's API creates placeholder entries for banned usernames and usernames
-      // that have not been created yet. So, in order to make sure that the name is
-      // real, check to see if an icon has been set up. If so, then it is a real user.
-      if (userData.logo !== null && userData.display_name !== undefined) {
-        // Pulls additional information not available in first call.
-        $.getJSON(GetURL(username,"streams"), function(streamData) {
-
-          iconContainer.attr({"src":userData.logo});
-
+    $.getJSON(GetURL(username,"users"), userData => {
+      if (typeof userData.error === 'undefined') {
+        streamerToAdd.setDisplayName(userData.display_name);
+        streamerToAdd.setImage(userData.logo);
+        $.getJSON(GetURL(username,"streams"), streamData => {
           if (streamData.stream) {
-            channelInfo.children('.stream-status').html(streamData.stream.channel.status);
-            channelInfo.children('.stream-link').html("Watch Stream");
-            container.addClass("active");
+            streamerToAdd.setStatus(STREAMSTATUS.ONLINE, streamData.stream.channel.status);
           } else {
-            channelInfo.children('.stream-status').html("Offline");
-            channelInfo.children('.stream-link').html("Visit Channel");
-            container.addClass("offline");
+            streamerToAdd.setStatus(STREAMSTATUS.OFFLINE);
           }
         });
       } else {
-        container.addClass("unrecognized");
-        // Fallback in case username comes back as undefined.
-        channelInfo.children('.stream-name').html(username);
+        streamerToAdd.setChannelNull();
       }
-
-      $(".stream-list-container").append(container);
     });
   }
 
@@ -91,7 +192,8 @@
     closeMenu();
   }
 
-  /** Swap streamer card with the one immediately next to it.
+  /**
+  * Swap streamer card with the one immediately next to it.
   * @param {jQuery} el - The jQuery element that called the function.
   * @param {String} type - The direction in which to move.
   */
@@ -115,7 +217,8 @@
     }
   }
 
-  /** Remove streamer from view and from trackedNames array
+  /**
+  * Remove streamer from view and from trackedNames array
   * @param {jQuery} el - The jQuery element that called the function.
   */
   function deleteStreamer(el) {
@@ -125,7 +228,8 @@
     $(el).closest(".twitch-container").remove();
   }
 
-  /** Helper function used to close "add streamer" popup, and clears entered data*/
+  /**
+  * Helper function used to close "add streamer" popup, and clears entered data*/
   function closeMenu() {
     $("#new-streamer").val("");
     $(".add-stream-menu .error").html("");
@@ -133,7 +237,8 @@
     $(".add-stream-menu").animate({"margin-top":"0"});
   }
 
-  /** Toggle which streamers are visible.
+  /**
+  * Toggle which streamers are visible.
   * @param {jQuery} el - The jQuery element that called the function.
   */
   function toggleVisibleStreamers(el) {
@@ -156,22 +261,22 @@
                        }
   }
 
-  $(document).ready(function() {
+  $(document).ready(() => {
     populateDefaultList();
 
     $(".display-option").click(function() {
       toggleVisibleStreamers($(this));
     });
 
-    $(".stream-list-container").on('click', '.clear', function() {
+    $("#stream-list-container").on('click', '.clear', function() {
       deleteStreamer($(this));
     });
 
-    $(".stream-list-container").on("click",".sort-up-arrow",function() {
+    $("#stream-list-container").on("click",".sort-up-arrow",function() {
       swapStreamer($(this), DIRECTION.UP);
     });
 
-    $(".stream-list-container").on("click",".sort-down-arrow",function() {
+    $("#stream-list-container").on("click",".sort-down-arrow",function() {
       swapStreamer($(this), DIRECTION.DOWN);
     });
 

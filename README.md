@@ -7,6 +7,8 @@ Demo javascript applet that uses [Twitch's API](https://dev.twitch.tv/) to show 
 ### Dependencies
 *Hard dependencies*
 1. [jQuery](https://jquery.com/)
+2. A SASS compiler
+3. An ES6 compiler
 
 *Soft dependencies*
 1. [Normalize.css](https://github.com/necolas/normalize.css/)
