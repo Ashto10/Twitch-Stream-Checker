@@ -9,16 +9,16 @@
       <div class="header-contents">
         <span class="site-title">Stream Status</span>
         <div class="display-settings">
-          <a class="display-option selected">All</a>
-          <a class="display-option">Live</a>
-          <a class="display-option">Offline</a>
+          <a class="display-option selected" data-select="all">All</a>
+          <a class="display-option" data-select="online">Live</a>
+          <a class="display-option" data-select="offline">Offline</a>
         </div>
       </div>
     </header>
     <main id="stream-list-container"></main>
     <div class="add-stream-overlay">
       <div class="add-stream-menu">
-        <a class="clear"></a>
+        <a class="clear" id="close-stream-menu"></a>
         <p>Enter the streamer's username</p>
         <input type="text" id="new-streamer">
         <a id="submit">Add</a>

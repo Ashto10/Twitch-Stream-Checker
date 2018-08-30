@@ -1,7 +1,7 @@
 (function () {
-  
+
   /** Array used to store tracked streamers */
-  var trackedNames = ["vgbootcamp","ESL_SC2", "OgamingSC2", "cretetion", "freecodecamp", "storbeck", "habathcx", "RobotCaleb", "noobs2ninjas"];
+  let trackedStreamers = {};
 
   /**
   * Enum for arrow direction 
@@ -22,7 +22,7 @@
     ONLINE: "ONLINE",
     OFFLINE: "OFFLINE"
   });
-  
+
   /**
   * Helper function used to create DOM elements
   * @param{String} tag - the tag to wrap the element with.
@@ -63,33 +63,52 @@
     * @param{String} searchedName - The initial username that an user enters when searching.
     */
     constructor(searchedName) {
-      this.displayName = searchedName;
-      this.name = this.img = this.status = this.cardContainer = this.channelInfo = null;
+      this.name = searchedName;
+      this.nameContainer = this.imgContainer = this.statusContainer = this.cardContainer = this.channelInfoContainer = null;
 
       this.createCard();
     }
 
-    /**
-    * Creates the card's HTML elements */
+    /** Creates the card's HTML elements */
     createCard() {
-      this.cardContainer = createElement('div', 'twitch-container');
+      this.cardContainer = createElement('div', 'twitch-container', {'data-username': this.name});
 
       let statusBar = createElement('div', 'status-bar');
-      let clearBtn = createElement('div', 'clear');
+      let clearBtn = createElement('div', 'clear delete-card');
       let upBtn = createElement('div', 'sort-up-arrow');
       let downBtn = createElement('div', 'sort-down-arrow');
       addElementsToParent(statusBar, [clearBtn, downBtn, upBtn]);
 
-      this.img = createElement('img', 'stream-icon', {'src': 'https://www.placehold.it/300x300'});
+      this.imgContainer = createElement('img', 'stream-icon', {'src': 'https://www.placehold.it/300x300'});
 
-      this.channelInfo = createElement('div', 'channel-info');
-      this.name = createElement('div', 'stream-name', null, this.displayName);
-      this.status = createElement('div', 'stream-status', null, 'Loading');
+      this.channelInfoContainer = createElement('div', 'channel-info');
+      this.nameContainer = createElement('div', 'stream-name', null, this.name);
+      this.statusContainer = createElement('div', 'stream-status', null, 'Loading');
 
-      addElementsToParent(this.channelInfo, [this.name, this.status]);
-      addElementsToParent(this.cardContainer, [statusBar, this.img, this.channelInfo]);
+      addElementsToParent(this.channelInfoContainer, [this.nameContainer, this.statusContainer]);
+      addElementsToParent(this.cardContainer, [statusBar, this.imgContainer, this.channelInfoContainer]);
 
       document.getElementById('stream-list-container').appendChild(this.cardContainer);
+      this.LoadStreamInfo();
+    }
+
+    /** Pull specified username data from Twitch API, and create info card. Needs to make two seperate calls due to the way that Twitch organizes their data. */
+    LoadStreamInfo() {
+      $.getJSON(GetURL(this.name,"users"), userData => {
+        if (typeof userData.error === 'undefined') {
+          this.setDisplayName(userData.display_name);
+          this.setImage(userData.logo);
+          $.getJSON(GetURL(this.name,"streams"), streamData => {
+            if (streamData.stream) {
+              this.setStatus(STREAMSTATUS.ONLINE, streamData.stream.channel.status);
+            } else {
+              this.setStatus(STREAMSTATUS.OFFLINE);
+            }
+          });
+        } else {
+          this.setChannelNull();
+        }
+      });
     }
 
     /**
@@ -97,7 +116,7 @@
     * @param{String} displayName - The new displayName to use.
     */
     setDisplayName(displayName) {
-      this.name.textContent = displayName;
+      this.nameContainer.textContent = displayName;
     }
 
     /**
@@ -106,13 +125,13 @@
     * @param{String} statusText - The text to display as the streamer's status.
     */
     setStatus(status, statusText) {
-      this.channelInfo.appendChild(createElement('a', 'stream-link', {'href': `https://www.twitch.tv/${this.displayName}`}, 'Visit Channel'));
-      
+      this.channelInfoContainer.appendChild(createElement('a', 'stream-link', {'href': `https://www.twitch.tv/${this.name}`}, 'Visit Channel'));
+
       if (status === STREAMSTATUS.OFFLINE) {
-        this.status.textContent = "Offline";
+        this.statusContainer.textContent = "Offline";
         this.cardContainer.classList.add("offline");
       } else if (status === STREAMSTATUS.ONLINE) {
-        this.status.textContent = statusText;
+        this.statusContainer.textContent = statusText;
         this.cardContainer.classList.add("active");
       }
 
@@ -120,7 +139,7 @@
 
     /** Update streamer status text for channels that don't exist. */
     setChannelNull() {
-      this.status.textContent = "Channel coming soon!";
+      this.statusContainer.textContent = "Channel coming soon!";
     }
 
     /**
@@ -128,7 +147,7 @@
     * @param{StreamStatus} imageURL - URL for streamer's icon.
     */
     setImage(imageUrl) {
-      this.img.setAttribute('src', imageUrl);
+      this.imgContainer.setAttribute('src', imageUrl);
     }
   }
 
@@ -142,42 +161,12 @@
     return "https://wind-bow.gomix.me/twitch-api/"+type+"/"+username+"?callback=?";
   }
 
-  /* Helper function to load default usernames at startup. */
-  function populateDefaultList() {
-    trackedNames.forEach(name => {
-      GetStreamInfo(name);
-    });
-  }
-
-  /*
-  * Pull specified username data from Twitch API, and create info card. Needs to make two seperate calls due to the way that Twitch organizes their data.
-  * @param{String} username - The username to search for.
+  /**
+  * Add new streamer to trackedStreamers array, if it matches requirements. 
+  * @param {String} streamerToAdd - the username to begin tracking.
   */
-  function GetStreamInfo(username) {
-    let streamerToAdd = new streamerCard(username);
-
-    $.getJSON(GetURL(username,"users"), userData => {
-      if (typeof userData.error === 'undefined') {
-        streamerToAdd.setDisplayName(userData.display_name);
-        streamerToAdd.setImage(userData.logo);
-        $.getJSON(GetURL(username,"streams"), streamData => {
-          if (streamData.stream) {
-            streamerToAdd.setStatus(STREAMSTATUS.ONLINE, streamData.stream.channel.status);
-          } else {
-            streamerToAdd.setStatus(STREAMSTATUS.OFFLINE);
-          }
-        });
-      } else {
-        streamerToAdd.setChannelNull();
-      }
-    });
-  }
-
-  /* Add new streamer to trackedNames array, if it matches requirements */
-  function addNewStreamer() {
-    var streamerToAdd = $("#new-streamer").val();
-
-    if (trackedNames.indexOf(streamerToAdd) !== -1) {
+  function addNewStreamer(streamerToAdd) {
+    if (streamerToAdd in trackedStreamers) {
       $(".add-stream-menu .error").html("Username is already being tracked!");
       return;
     }
@@ -187,8 +176,7 @@
       return;
     }
 
-    trackedNames.push(streamerToAdd);
-    GetStreamInfo(streamerToAdd);
+    trackedStreamers[streamerToAdd] = new streamerCard(streamerToAdd);
     closeMenu();
   }
 
@@ -198,8 +186,8 @@
   * @param {String} type - The direction in which to move.
   */
   function swapStreamer(el, direction) {
-    var currentView = $(".display-option.selected").html();
-    var selection = "";
+    let currentView = $(".display-option.selected").html();
+    let selection = "";
     switch(currentView) {
       case "Live":
         selection = ".active";
@@ -209,7 +197,7 @@
         break;
                       }
 
-    var item = $(el).closest(".twitch-container");
+    let item = $(el).closest(".twitch-container");
     if (direction === DIRECTION.UP) {
       item.insertBefore(item.prevAll(".twitch-container"+ selection +":first"));
     } else if (direction === DIRECTION.DOWN) {
@@ -218,14 +206,15 @@
   }
 
   /**
-  * Remove streamer from view and from trackedNames array
-  * @param {jQuery} el - The jQuery element that called the function.
+  * Remove streamer from view and from trackedStreamers array
+  * @param {HTMLElement} el - The element that called the function.
   */
   function deleteStreamer(el) {
-    console.log('clicked!');
-    var nameToRemove = $(el).parents(".twitch-container").find(".stream-name").text();
-    trackedNames = trackedNames.splice(trackedNames.indexOf(nameToRemove),trackedNames.indexOf(nameToRemove) + 1);
-    $(el).closest(".twitch-container").remove();
+    let parent = el.closest('.twitch-container');
+    let username = parent.getAttribute('data-username');
+
+    document.getElementById('stream-list-container').removeChild(parent);
+    delete trackedStreamers[username];
   }
 
   /**
@@ -239,37 +228,42 @@
 
   /**
   * Toggle which streamers are visible.
-  * @param {jQuery} el - The jQuery element that called the function.
+  * @param {HTMLElement} el - The jQuery element that called the function.
   */
   function toggleVisibleStreamers(el) {
-    console.log(el);
-    $(".display-option").removeClass("selected");
-    $(el).addClass("selected");
+    for (let button of document.getElementsByClassName('display-option')) {
+      button.classList.remove('selected');
+    }
+    el.classList.add('selected');
 
-    switch($(el).html()) {
-      case "All":
-        $(".twitch-container").css({"display":"block"});
-        break;
-      case "Live":
-        $(".twitch-container.active").css({"display":"block"});
-        $(".twitch-container:not(.active)").css({"display":"none"});
-        break;
-      case "Offline":
-        $(".twitch-container.active").css({"display":"none"});
-        $(".twitch-container:not(.active)").css({"display":"block"});
-        break;
-                       }
+    for (let card of document.getElementsByClassName('twitch-container')) {
+      card.style.display = 'block';
+    }
+
+    let item = '';
+    switch(el.getAttribute('data-select')) {
+      case "online": item = 'active'; break;
+      case "offline": item = 'offline'; break;
+    }
+
+    for (let card of document.getElementsByClassName(item)) {
+      card.style.display = 'none';
+    }
   }
 
-  $(document).ready(() => {
-    populateDefaultList();
-
-    $(".display-option").click(function() {
-      toggleVisibleStreamers($(this));
+  document.addEventListener("DOMContentLoaded",function(){
+    let initialNames = ["vgbootcamp","ESL_SC2", "OgamingSC2", "cretetion", "freecodecamp", "storbeck", "habathcx", "RobotCaleb", "noobs2ninjas"];
+    initialNames.forEach(name => {
+      addNewStreamer(name);
     });
 
-    $("#stream-list-container").on('click', '.clear', function() {
-      deleteStreamer($(this));
+    document.addEventListener('click', function(e) {
+      if (!e.target) { return; }
+
+      switch(e.target.className) {
+        case 'clear delete-card': deleteStreamer(e.target); break;
+        case 'display-option': toggleVisibleStreamers(e.target); break;
+      }
     });
 
     $("#stream-list-container").on("click",".sort-up-arrow",function() {
@@ -285,18 +279,20 @@
       $(".add-stream-overlay").fadeIn();
       $(".add-stream-menu").animate({"margin-top":"30vh"});
     });
-
-    $(".add-stream-menu .clear").click(function() {
+    
+    let closeMenuBtn = document.getElementById('close-stream-menu');
+    closeMenuBtn.addEventListener('click', () => {
       closeMenu();
     });
-
-    $("#submit").click(function() {
-      addNewStreamer();
+    
+    let submitBtn = document.getElementById('submit');
+    submitBtn.addEventListener('click', () => {
+      addNewStreamer($("#new-streamer").val());
     });
 
     // Enable keyboard shortcuts for certain actions
     $('#new-streamer').keydown(function(e){
-      var pressedKey = e.keyCode || e.which;
+      let pressedKey = e.keyCode || e.which;
 
       if (pressedKey == 13) {
         addNewStreamer();
