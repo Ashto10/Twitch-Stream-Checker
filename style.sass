@@ -21,6 +21,9 @@ $headerHeight : 50px
 body
   font-family: 'Droid Sans', sans-serif
   background: $backgroundColor
+  
+button, input[type=button]
+  border: none
 
 header#main-menu
   z-index: 1
@@ -114,12 +117,14 @@ $statusHeight: 20px
 .clear
   float: right
   display: block
+  background: none
   width: $statusHeight
   height: $statusHeight
   position: relative
   transform: rotate(-45deg)
   &::before, &::after 
     position: absolute
+    top: 0
     left: $statusHeight/2
     content: ''
     height: $statusHeight
@@ -215,15 +220,17 @@ $statusHeight: 20px
   padding: 1.5em 1em
   text-align: center
   input
-    width: 70%
+    width: 80%
     margin-right: 10px
-    padding: 5px
+    padding: 8px
   #submit
+    display: inline
+    width: 15%
     position: relative
     top: 1px
     background: $attentionColor
-    padding: 5px 10px
-  p.error
+    padding: 10px
+  #add-streamer-error
     color: red
     font-style: italic
     margin-bottom: 0

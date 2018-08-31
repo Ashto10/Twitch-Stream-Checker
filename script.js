@@ -22,6 +22,11 @@
     ONLINE: "ONLINE",
     OFFLINE: "OFFLINE"
   });
+  
+  /** Helper function to shorten frequent document.getElementByID calls. */
+  function getElById(id) {
+    return document.getElementById(id);
+  }
 
   /**
   * Helper function used to create DOM elements
@@ -31,15 +36,15 @@
   * @param{String} content - The inner text.
   * @return {HTMLElement}
   */
-  function createElement(tag, className, attr, content = null) {
+  function createElement(tag, className, attr = null, content = null) {
     let el = document.createElement(tag);
     el.className = className;
     el.textContent = content;
-
-    for (let key in attr) {
-      if (attr.hasOwnProperty(key)) {
+    
+    if (attr) {
+      Object.keys(attr).forEach(key => {
         el.setAttribute(key, attr[key]);
-      }
+      });
     }
 
     return el;
@@ -64,8 +69,9 @@
     */
     constructor(searchedName) {
       this.name = searchedName;
+      
       this.nameContainer = this.imgContainer = this.statusContainer = this.cardContainer = this.channelInfoContainer = null;
-
+      
       this.createCard();
     }
 
@@ -74,9 +80,9 @@
       this.cardContainer = createElement('div', 'twitch-container', {'data-username': this.name});
 
       let statusBar = createElement('div', 'status-bar');
-      let clearBtn = createElement('div', 'clear delete-card');
-      let upBtn = createElement('div', 'sort-up-arrow');
-      let downBtn = createElement('div', 'sort-down-arrow');
+      let clearBtn = createElement('div', 'clear', {'data-action': 'delete-card'});
+      let upBtn = createElement('div', 'sort-up-arrow', {'data-action': 'sort-up'});
+      let downBtn = createElement('div', 'sort-down-arrow', {'data-action': 'sort-down'});
       addElementsToParent(statusBar, [clearBtn, downBtn, upBtn]);
 
       this.imgContainer = createElement('img', 'stream-icon', {'src': 'https://www.placehold.it/300x300'});
@@ -88,7 +94,7 @@
       addElementsToParent(this.channelInfoContainer, [this.nameContainer, this.statusContainer]);
       addElementsToParent(this.cardContainer, [statusBar, this.imgContainer, this.channelInfoContainer]);
 
-      document.getElementById('stream-list-container').appendChild(this.cardContainer);
+      getElById('stream-list-container').appendChild(this.cardContainer);
       this.LoadStreamInfo();
     }
 
@@ -167,12 +173,12 @@
   */
   function addNewStreamer(streamerToAdd) {
     if (streamerToAdd in trackedStreamers) {
-      $(".add-stream-menu .error").html("Username is already being tracked!");
+      getElById('add-streamer-error').innerHTML = 'This user is already being tracked!';
       return;
     }
 
     if (streamerToAdd.length < 4 || streamerToAdd.length > 25) {
-      $(".add-stream-menu .error").html("Username must be between 4 and 25 characters");
+      getElById('add-streamer-error').innerHTML = 'Username must be between 4 and 25 characters';
       return;
     }
 
@@ -182,27 +188,20 @@
 
   /**
   * Swap streamer card with the one immediately next to it.
-  * @param {jQuery} el - The jQuery element that called the function.
+  * @param {HTMLElement} el - The element that called the function.
   * @param {String} type - The direction in which to move.
   */
   function swapStreamer(el, direction) {
-    let currentView = $(".display-option.selected").html();
-    let selection = "";
-    switch(currentView) {
-      case "Live":
-        selection = ".active";
-        break;
-      case "Offline":
-        selection = ":not(.active)";
-        break;
-                      }
-
-    let item = $(el).closest(".twitch-container");
+    let item = el.closest(".twitch-container");
     if (direction === DIRECTION.UP) {
-      item.insertBefore(item.prevAll(".twitch-container"+ selection +":first"));
+      if (item.previousSibling !== null) {
+        getElById('stream-list-container').insertBefore(item, item.previousSibling);
+      }
     } else if (direction === DIRECTION.DOWN) {
-      item.insertAfter(item.nextAll(".twitch-container"+ selection +":first"));
-    }
+      if (item.nextElementSibling !== null) {
+        getElById('stream-list-container').insertBefore(item.nextSibling, item);
+      }
+    }    
   }
 
   /**
@@ -213,22 +212,22 @@
     let parent = el.closest('.twitch-container');
     let username = parent.getAttribute('data-username');
 
-    document.getElementById('stream-list-container').removeChild(parent);
+    getElById('stream-list-container').removeChild(parent);
     delete trackedStreamers[username];
   }
 
   /**
   * Helper function used to close "add streamer" popup, and clears entered data*/
   function closeMenu() {
-    $("#new-streamer").val("");
-    $(".add-stream-menu .error").html("");
+    getElById('new-streamer').value = '';
+    getElById('add-streamer-error').innerHTML = '';
     $(".add-stream-overlay").fadeOut();
     $(".add-stream-menu").animate({"margin-top":"0"});
   }
 
   /**
   * Toggle which streamers are visible.
-  * @param {HTMLElement} el - The jQuery element that called the function.
+  * @param {HTMLElement} el - The element that called the function.
   */
   function toggleVisibleStreamers(el) {
     for (let button of document.getElementsByClassName('display-option')) {
@@ -250,6 +249,11 @@
       card.style.display = 'none';
     }
   }
+  
+  function displayAddStreamerMenu() {
+    $(".add-stream-overlay").fadeIn();
+    $(".add-stream-menu").animate({"margin-top":"30vh"});
+  }
 
   document.addEventListener("DOMContentLoaded",function(){
     let initialNames = ["vgbootcamp","ESL_SC2", "OgamingSC2", "cretetion", "freecodecamp", "storbeck", "habathcx", "RobotCaleb", "noobs2ninjas"];
@@ -260,42 +264,24 @@
     document.addEventListener('click', function(e) {
       if (!e.target) { return; }
 
-      switch(e.target.className) {
-        case 'clear delete-card': deleteStreamer(e.target); break;
-        case 'display-option': toggleVisibleStreamers(e.target); break;
+      switch(e.target.getAttribute('data-action')) {
+        case 'delete-card': deleteStreamer(e.target); break;
+        case 'select': toggleVisibleStreamers(e.target); break;
+        case 'close-add-streamer-menu': closeMenu(); break;
+        case 'add-new-streamer': addNewStreamer(getElById('new-streamer').value); break;
+        case 'display-add-menu': displayAddStreamerMenu(); break;
+        case 'sort-up': swapStreamer(e.target, DIRECTION.UP); break;
+        case 'sort-down': swapStreamer(e.target, DIRECTION.DOWN); break;
       }
     });
-
-    $("#stream-list-container").on("click",".sort-up-arrow",function() {
-      swapStreamer($(this), DIRECTION.UP);
-    });
-
-    $("#stream-list-container").on("click",".sort-down-arrow",function() {
-      swapStreamer($(this), DIRECTION.DOWN);
-    });
-
-    // Bring up "Add user menu".
-    $(".add-stream").click(function() {
-      $(".add-stream-overlay").fadeIn();
-      $(".add-stream-menu").animate({"margin-top":"30vh"});
-    });
     
-    let closeMenuBtn = document.getElementById('close-stream-menu');
-    closeMenuBtn.addEventListener('click', () => {
-      closeMenu();
-    });
-    
-    let submitBtn = document.getElementById('submit');
-    submitBtn.addEventListener('click', () => {
-      addNewStreamer($("#new-streamer").val());
-    });
-
     // Enable keyboard shortcuts for certain actions
-    $('#new-streamer').keydown(function(e){
+    document.addEventListener('keydown', function(e) {
       let pressedKey = e.keyCode || e.which;
 
       if (pressedKey == 13) {
-        addNewStreamer();
+        e.preventDefault();
+        addNewStreamer(getElById('new-streamer').value);
       } else if (pressedKey == 27) {
         closeMenu();
       }

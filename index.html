@@ -9,23 +9,23 @@
       <div class="header-contents">
         <span class="site-title">Stream Status</span>
         <div class="display-settings">
-          <a class="display-option selected" data-select="all">All</a>
-          <a class="display-option" data-select="online">Live</a>
-          <a class="display-option" data-select="offline">Offline</a>
+          <button class="display-option selected" data-action="select" data-select="all">All</button>
+          <button class="display-option" data-action="select" data-select="online">Live</button>
+          <button class="display-option" data-action="select" data-select="offline">Offline</button>
         </div>
       </div>
     </header>
     <main id="stream-list-container"></main>
-    <div class="add-stream-overlay">
-      <div class="add-stream-menu">
-        <a class="clear" id="close-stream-menu"></a>
+    <sidebar class="add-stream-overlay" data-action="close-add-streamer-menu">
+      <form class="add-stream-menu">
+        <button class="clear" data-action="close-add-streamer-menu"></button>
         <p>Enter the streamer's username</p>
         <input type="text" id="new-streamer">
-        <a id="submit">Add</a>
-        <p class="error"></p>
-      </div>
-    </div>
-    <div class="add-stream">+</div>
+        <input type="button" id="submit" value="add" data-action="add-new-streamer"/>
+        <p id="add-streamer-error"></p>
+      </form>
+    </sidebar>
+    <button class="add-stream" data-action="display-add-menu">+</button>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prefixfree/1.0.7/prefixfree.min.js"></script>
