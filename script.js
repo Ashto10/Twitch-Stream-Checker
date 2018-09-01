@@ -9,8 +9,8 @@
   * @enum {String}
   */
   const DIRECTION = Object.freeze({
-    UP: "DIRECTION_UP",
-    DOWN: "DIRECTION_DOWN"
+    UP: 'DIRECTION_UP',
+    DOWN: 'DIRECTION_DOWN'
   });
 
   /**
@@ -19,8 +19,8 @@
   * @enum {String}
   */
   const STREAMSTATUS = Object.freeze({
-    ONLINE: "ONLINE",
-    OFFLINE: "OFFLINE"
+    ONLINE: 'ONLINE',
+    OFFLINE: 'OFFLINE'
   });
   
   /** Helper function to shorten frequent document.getElementByID calls. */
@@ -58,6 +58,43 @@
   function addElementsToParent(parent, elements) {
     elements.forEach(el => {
       parent.appendChild(el);
+    });
+  }
+  
+  /**
+  * Get requested data from API and unpack the recieved JSONP.  
+  * @param {String} username - the username to search for.
+  * @param {String} category - the category to search in.
+  * @param {String} loadTime - An alloted amount of time before firing timeout.
+  * @return {Promise}
+  */
+  function execJSONP(username, category, loadTime) {
+    return new Promise((resolve, reject) => {
+      let script = document.createElement('script');
+      let cb = 'exec'+Math.floor((Math.random()*65535)+1);
+      script.async = true;
+      script.src = `https://wind-bow.gomix.me/twitch-api/${category}/${username}?callback=${cb}`;
+      script.id = cb;
+      
+      document.getElementsByTagName('head')[0].appendChild(script);
+      
+      let deleteSrc = () => {
+        let scr = getElById(cb);
+        scr.parentNode.removeChild(scr);
+        window[cb] = null;
+        delete window[cb];
+      }
+
+      let timeout = setTimeout(() => {
+        reject('timed out');
+        deleteSrc();
+      }, loadTime);
+      
+      window[cb] = (data) => {
+        resolve(data);
+        clearTimeout(timeout);
+        deleteSrc();
+      }
     });
   }
 
@@ -100,21 +137,15 @@
 
     /** Pull specified username data from Twitch API, and create info card. Needs to make two seperate calls due to the way that Twitch organizes their data. */
     LoadStreamInfo() {
-      $.getJSON(GetURL(this.name,"users"), userData => {
-        if (typeof userData.error === 'undefined') {
+      execJSONP(this.name, 'users', 3000)
+        .then(userData => {
+          if (typeof userData.error !== 'undefined') { throw 'Not a valid username' }
           this.setDisplayName(userData.display_name);
-          this.setImage(userData.logo);
-          $.getJSON(GetURL(this.name,"streams"), streamData => {
-            if (streamData.stream) {
-              this.setStatus(STREAMSTATUS.ONLINE, streamData.stream.channel.status);
-            } else {
-              this.setStatus(STREAMSTATUS.OFFLINE);
-            }
-          });
-        } else {
-          this.setChannelNull();
-        }
-      });
+          this.setImage(userData.logo); })
+        .then(() => execJSONP(this.name, 'streams', 3000))
+        .then(streamData => {
+          streamData.stream ? this.setStatus(STREAMSTATUS.ONLINE, streamData.stream.channel.status) : this.setStatus(STREAMSTATUS.OFFLINE); })
+        .catch(() => this.setChannelNull());
     }
 
     /**
@@ -131,21 +162,21 @@
     * @param{String} statusText - The text to display as the streamer's status.
     */
     setStatus(status, statusText) {
-      this.channelInfoContainer.appendChild(createElement('a', 'stream-link', {'href': `https://www.twitch.tv/${this.name}`}, 'Visit Channel'));
+      this.channelInfoContainer.appendChild(createElement('a', 'stream-link', {'href': `https://www.twitch.tv/${this.name}`, 'target': '_blank'}, 'Visit Channel'));
 
       if (status === STREAMSTATUS.OFFLINE) {
-        this.statusContainer.textContent = "Offline";
-        this.cardContainer.classList.add("offline");
+        this.statusContainer.textContent = 'Offline';
+        this.cardContainer.classList.add('offline');
       } else if (status === STREAMSTATUS.ONLINE) {
         this.statusContainer.textContent = statusText;
-        this.cardContainer.classList.add("active");
+        this.cardContainer.classList.add('active');
       }
 
     }
 
     /** Update streamer status text for channels that don't exist. */
     setChannelNull() {
-      this.statusContainer.textContent = "Channel coming soon!";
+      this.statusContainer.textContent = 'Channel coming soon!';
     }
 
     /**
@@ -155,16 +186,6 @@
     setImage(imageUrl) {
       this.imgContainer.setAttribute('src', imageUrl);
     }
-  }
-
-  /**
-  * Helper function to access Twitch API.
-  * @param {String} username - The username to search for.
-  * @param {String} type - Which database to search.
-  * @return {String}
-  */
-  function GetURL(username,type) {
-    return "https://wind-bow.gomix.me/twitch-api/"+type+"/"+username+"?callback=?";
   }
 
   /**
@@ -192,7 +213,7 @@
   * @param {String} type - The direction in which to move.
   */
   function swapStreamer(el, direction) {
-    let item = el.closest(".twitch-container");
+    let item = el.closest('.twitch-container');
     if (direction === DIRECTION.UP) {
       if (item.previousSibling !== null) {
         getElById('stream-list-container').insertBefore(item, item.previousSibling);
@@ -215,16 +236,7 @@
     getElById('stream-list-container').removeChild(parent);
     delete trackedStreamers[username];
   }
-
-  /**
-  * Helper function used to close "add streamer" popup, and clears entered data*/
-  function closeMenu() {
-    getElById('new-streamer').value = '';
-    getElById('add-streamer-error').innerHTML = '';
-    $(".add-stream-overlay").fadeOut();
-    $(".add-stream-menu").animate({"margin-top":"0"});
-  }
-
+  
   /**
   * Toggle which streamers are visible.
   * @param {HTMLElement} el - The element that called the function.
@@ -241,8 +253,8 @@
 
     let item = '';
     switch(el.getAttribute('data-select')) {
-      case "online": item = 'active'; break;
-      case "offline": item = 'offline'; break;
+      case 'online': item = 'active'; break;
+      case 'offline': item = 'offline'; break;
     }
 
     for (let card of document.getElementsByClassName(item)) {
@@ -250,24 +262,45 @@
     }
   }
   
+  /**
+  * Display the overlay, and animate its entry.
+  */
   function displayAddStreamerMenu() {
-    $(".add-stream-overlay").fadeIn();
-    $(".add-stream-menu").animate({"margin-top":"30vh"});
+    let overlay = getElById('add-stream-overlay');
+    overlay.animate([{opacity: 0}, {opacity: 1}], {fill: 'forwards', duration: 800});
+    overlay.style.display = 'block';
+    
+    getElById('add-stream-menu').animate([{top: 0}, {top: '50%'}], {fill: 'forwards', duration: 900, easing: 'ease-out'});
   }
 
-  document.addEventListener("DOMContentLoaded",function(){
-    let initialNames = ["vgbootcamp","ESL_SC2", "OgamingSC2", "cretetion", "freecodecamp", "storbeck", "habathcx", "RobotCaleb", "noobs2ninjas"];
+  /**
+  * Animate the overlay disappearing, then set display to hidden.
+  */
+  function closeMenu() {
+    getElById('new-streamer').value = '';
+    getElById('add-streamer-error').innerHTML = '';
+    
+    let overlay = getElById('add-stream-overlay');
+    overlay.animate([{opacity: 1}, {opacity: 0}], {fill: 'forwards', duration: 500});
+    setTimeout(() => overlay.style.display = 'none', 500);
+    
+    getElById('add-stream-menu').animate({'margin-top':'0'});
+  }
+
+  document.addEventListener('DOMContentLoaded',function(){
+    let initialNames = ['vgbootcamp','ESL_SC2', 'OgamingSC2', 'cretetion', 'freecodecamp', 'storbeck', 'habathcx', 'RobotCaleb', 'noobs2ninjas'];
     initialNames.forEach(name => {
       addNewStreamer(name);
     });
 
+    // Handle clicking on elements, especially dynamic ones that can't be attached to directly.
     document.addEventListener('click', function(e) {
       if (!e.target) { return; }
 
       switch(e.target.getAttribute('data-action')) {
         case 'delete-card': deleteStreamer(e.target); break;
         case 'select': toggleVisibleStreamers(e.target); break;
-        case 'close-add-streamer-menu': closeMenu(); break;
+        case 'close-add-streamer-menu': e.preventDefault(); closeMenu(); break;
         case 'add-new-streamer': addNewStreamer(getElById('new-streamer').value); break;
         case 'display-add-menu': displayAddStreamerMenu(); break;
         case 'sort-up': swapStreamer(e.target, DIRECTION.UP); break;

@@ -1,8 +1,13 @@
 <html lang="en">
   <head>
-    <link href="https://fonts.googleapis.com/css?family=Passion+One|Droid+Sans:400,600" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css" rel="stylesheet" type="text/css">
-    <link href="style.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Passion+One|Droid+Sans:400,600"
+          rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css"
+          rel="stylesheet"
+          type="text/css">
+    <link href="style.css"
+          rel="stylesheet"
+          type="text/css">
   </head>
   <body>
     <header id="main-menu">
@@ -16,8 +21,8 @@
       </div>
     </header>
     <main id="stream-list-container"></main>
-    <sidebar class="add-stream-overlay" data-action="close-add-streamer-menu">
-      <form class="add-stream-menu">
+    <sidebar id="add-stream-overlay" data-action="close-add-streamer-menu">
+      <form id="add-stream-menu">
         <button class="clear" data-action="close-add-streamer-menu"></button>
         <p>Enter the streamer's username</p>
         <input type="text" id="new-streamer">
@@ -27,7 +32,6 @@
     </sidebar>
     <button class="add-stream" data-action="display-add-menu">+</button>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prefixfree/1.0.7/prefixfree.min.js"></script>
     <script src="script.js"></script>
   </body>
